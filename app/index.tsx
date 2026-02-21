@@ -9,7 +9,7 @@ import { useAnimations } from "../hooks/useAnimations";
 import { styles } from "../styles";
 
 export default function Index() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const { contentAnim, avatarAnimStyle, nameAnimStyle, aboutAnimStyle, buttonsAnimStyle } = useAnimations();
   const colors = themeColors[theme];
 
@@ -50,9 +50,10 @@ export default function Index() {
             href={PROFILE.links.linkedin}
             theme={theme}
           />
-          <IconLinkButton icon="reader-outline" label="Open Resume" tooltip="Resume" href={PROFILE.links.cv} theme={theme} />
+          <IconLinkButton icon="document-text-outline" label="Open Resume" tooltip="Resume" href={PROFILE.links.cv} theme={theme} />
           <IconLinkButton
-            icon="mail-outline"
+            icon="send-outline"
+            materialIcon="gmail"
             label="Send Email"
             tooltip="Email"
             href={PROFILE.links.email}

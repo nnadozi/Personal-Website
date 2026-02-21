@@ -1,59 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import type { ComponentProps } from "react";
 import { useRef, useState } from "react";
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import type { Theme } from "../constants/theme";
-import { iconColors } from "../constants/theme";
+import { themeColors, type Theme } from "../constants/theme";
 import { openExternalUrl } from "../utils/linking";
+
+type MaterialIconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
 
 interface IconLinkButtonProps {
   icon: ComponentProps<typeof Ionicons>["name"];
+  /** When set, show this MaterialCommunityIcons icon instead (e.g. "gmail" for Gmail). */
+  materialIcon?: MaterialIconName;
   label: string;
   tooltip: string;
   href: string;
   theme: Theme;
 }
 
-const iconConfig: Record<string, { color: keyof typeof iconColors.light; bg: string; border: string; shadow: string }> = {
-  "logo-github": {
-    color: "github",
-    bg: "rgba(24, 23, 23, ",
-    border: "rgba(24, 23, 23, ",
-    shadow: "rgba(24, 23, 23, ",
-  },
-  "logo-linkedin": {
-    color: "linkedin",
-    bg: "rgba(0, 119, 181, ",
-    border: "rgba(0, 119, 181, ",
-    shadow: "rgba(0, 119, 181, ",
-  },
-  "reader-outline": {
-    color: "resume",
-    bg: "rgba(59, 130, 246, ",
-    border: "rgba(59, 130, 246, ",
-    shadow: "rgba(59, 130, 246, ",
-  },
-  "mail-outline": {
-    color: "email",
-    bg: "rgba(234, 67, 53, ",
-    border: "rgba(234, 67, 53, ",
-    shadow: "rgba(234, 67, 53, ",
-  },
-};
-
-const defaultConfig = {
-  color: "resume" as const,
-  bg: "rgba(59, 130, 246, ",
-  border: "rgba(59, 130, 246, ",
-  shadow: "rgba(59, 130, 246, ",
-};
-
-export function IconLinkButton({ icon, label, tooltip, href, theme }: IconLinkButtonProps) {
+export function IconLinkButton({ icon, materialIcon, label, tooltip, href, theme }: IconLinkButtonProps) {
   const [isFocused, setIsFocused] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const config = iconConfig[icon] || defaultConfig;
-  const showTooltip = icon === "reader-outline" || icon === "mail-outline";
+  const showTooltip = icon === "document-text-outline" || icon === "send-outline" || materialIcon === "gmail";
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -73,22 +42,14 @@ export function IconLinkButton({ icon, label, tooltip, href, theme }: IconLinkBu
     }).start();
   };
 
-  const getIconColor = () => iconColors[theme][config.color];
+  const iconColor = themeColors[theme].text;
 
-  const getBackgroundColor = (hovered: boolean) => {
-    const alpha = hovered ? (theme === "light" ? 0.2 : 0.25) : theme === "light" ? 0.1 : 0.15;
-    return `${config.bg}${alpha})`;
-  };
-
-  const getBorderColor = (hovered: boolean) => {
-    const alpha = hovered ? (theme === "light" ? 0.5 : 0.6) : theme === "light" ? 0.3 : 0.4;
-    return `${config.border}${alpha})`;
-  };
-
-  const getShadowColor = () => {
-    const alpha = theme === "light" ? 0.35 : 0.4;
-    return `${config.shadow}${alpha})`;
-  };
+  const colors = themeColors[theme];
+  const bgDefault = colors.iconBg;
+  const borderDefault = colors.iconBorder;
+  const bgHover = theme === "light" ? "#D1D5DB" : "#404040";
+  const borderHover = theme === "light" ? "#9CA3AF" : "#525252";
+  const shadowColor = theme === "light" ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.4)";
 
   return (
     <Pressable
@@ -102,15 +63,18 @@ export function IconLinkButton({ icon, label, tooltip, href, theme }: IconLinkBu
       style={({ hovered, pressed }) => [
         styles.iconBtn,
         {
-          backgroundColor: getBackgroundColor(false),
-          borderColor: getBorderColor(false),
+          backgroundColor: bgDefault,
+          borderColor: borderDefault,
+          ...(Platform.OS === "web" && !hovered
+            ? ({ boxShadow: `0 4px 12px ${theme === "light" ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.35)"}` } as unknown as object)
+            : {}),
         },
         hovered && {
-          backgroundColor: getBackgroundColor(true),
-          borderColor: getBorderColor(true),
+          backgroundColor: bgHover,
+          borderColor: borderHover,
           ...(Platform.OS === "web"
             ? ({
-                boxShadow: `0 10px 30px ${getShadowColor()}, 0 0 0 1px ${getBorderColor(true)}`,
+                boxShadow: `0 10px 30px ${shadowColor}, 0 0 0 1px ${borderHover}`,
                 transform: "translateY(-4px) scale(1.08)",
               } as unknown as object)
             : {}),
@@ -126,8 +90,8 @@ export function IconLinkButton({ icon, label, tooltip, href, theme }: IconLinkBu
               style={[
                 styles.tooltip,
                 {
-                  backgroundColor: theme === "light" ? "#000000" : "#1E293B",
-                  borderColor: theme === "light" ? "#374151" : "#475569",
+                  backgroundColor: theme === "light" ? "#374151" : "#262626",
+                  borderColor: theme === "light" ? "#4B5563" : "#404040",
                 },
               ]}
             >
@@ -138,14 +102,18 @@ export function IconLinkButton({ icon, label, tooltip, href, theme }: IconLinkBu
                 style={[
                   styles.tooltipArrow,
                   {
-                    backgroundColor: theme === "light" ? "#000000" : "#1E293B",
-                    borderColor: theme === "light" ? "#374151" : "#475569",
+                    backgroundColor: theme === "light" ? "#374151" : "#262626",
+                    borderColor: theme === "light" ? "#4B5563" : "#404040",
                   },
                 ]}
               />
             </View>
           )}
-          <Ionicons name={icon} size={24} color={getIconColor()} />
+          {materialIcon ? (
+            <MaterialCommunityIcons name={materialIcon} size={24} color={iconColor} />
+          ) : (
+            <Ionicons name={icon} size={24} color={iconColor} />
+          )}
         </Animated.View>
       )}
     </Pressable>

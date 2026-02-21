@@ -2,20 +2,20 @@ export type Theme = "light" | "dark";
 
 export const themeColors = {
   light: {
-    background: "#FFFFFF",
+    background: "#F5F5F5",
     text: "#000000",
     cardBg: "transparent",
     cardBorder: "transparent",
-    iconBg: "#F3F4F6",
+    iconBg: "#E5E5E5",
     iconBorder: "#D1D5DB",
   },
   dark: {
-    background: "#0F172A",
+    background: "#171717",
     text: "#F8FAFC",
     cardBg: "transparent",
     cardBorder: "transparent",
-    iconBg: "#1E293B",
-    iconBorder: "#334155",
+    iconBg: "#262626",
+    iconBorder: "#404040",
   },
 };
 

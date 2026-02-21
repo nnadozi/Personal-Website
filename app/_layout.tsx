@@ -9,7 +9,7 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           // Keep a consistent background during transitions/loading.
-          contentStyle: { backgroundColor: "#070A17" },
+          contentStyle: { backgroundColor: "#171717" },
         }}
       />
       {Platform.OS === "web" && <Analytics />}

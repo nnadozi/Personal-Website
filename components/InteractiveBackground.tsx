@@ -31,42 +31,61 @@ export function InteractiveBackground({ theme }: { theme: Theme }) {
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
 
-      timeRef.current += 0.012;
+      const t = (timeRef.current += 0.015);
+      const w = canvas.width;
+      const h = canvas.height;
+      const cy = h / 2;
 
-      ctx.fillStyle = theme === "light" ? "#FFFFFF" : "#0F172A";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = theme === "light" ? "#F5F5F5" : "#171717";
+      ctx.fillRect(0, 0, w, h);
 
-      const waveCount = 3;
-      const baseColor = { r: 59, g: 130, b: 246 };
+      // Organic but rhythmic: layered waves with soft harmonics and gentle drift
+      const layers =
+        theme === "light"
+          ? [
+              { r: 185, g: 185, b: 185, amp: 110, freq: 0.0028, speed: 0.48, phase: 0, yBias: -0.05 },
+              { r: 165, g: 165, b: 165, amp: 92, freq: 0.0034, speed: -0.38, phase: 1.4, yBias: 0.02 },
+              { r: 200, g: 200, b: 200, amp: 78, freq: 0.0024, speed: 0.42, phase: 2.7, yBias: -0.02 },
+              { r: 150, g: 150, b: 150, amp: 68, freq: 0.0038, speed: -0.44, phase: 4.1, yBias: 0.05 },
+              { r: 175, g: 175, b: 175, amp: 58, freq: 0.003, speed: 0.36, phase: 0.9, yBias: -0.01 },
+            ]
+          : [
+              { r: 85, g: 85, b: 85, amp: 110, freq: 0.0028, speed: 0.48, phase: 0, yBias: -0.05 },
+              { r: 100, g: 100, b: 100, amp: 92, freq: 0.0034, speed: -0.38, phase: 1.4, yBias: 0.02 },
+              { r: 75, g: 75, b: 75, amp: 78, freq: 0.0024, speed: 0.42, phase: 2.7, yBias: -0.02 },
+              { r: 95, g: 95, b: 95, amp: 68, freq: 0.0038, speed: -0.44, phase: 4.1, yBias: 0.05 },
+              { r: 82, g: 82, b: 82, amp: 58, freq: 0.003, speed: 0.36, phase: 0.9, yBias: -0.01 },
+            ];
 
-      for (let i = 0; i < waveCount; i++) {
-        const waveOffset = (i / waveCount) * Math.PI * 2;
-        const waveSpeed = 0.5 + i * 0.3;
-        const waveAmplitude = 80 + i * 40;
-        const waveFrequency = 0.003 + i * 0.002;
+      const alpha1 = theme === "light" ? 0.16 : 0.2;
+      const alpha2 = theme === "light" ? 0.1 : 0.12;
+      const sharedDrift = Math.sin(t * 0.1) * 32;
 
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        const alpha1 = theme === "light" ? 0.12 : 0.2;
-        const alpha2 = theme === "light" ? 0.06 : 0.12;
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i];
+        const layerDrift = Math.sin(t * 0.16 + i * 0.6) * 18;
+        const yBase = cy + layer.yBias * h * 0.14 + sharedDrift + layerDrift;
 
-        gradient.addColorStop(0, `rgba(${baseColor.r},${baseColor.g},${baseColor.b},${alpha1})`);
-        gradient.addColorStop(0.5, `rgba(${baseColor.r + 30},${baseColor.g + 20},${baseColor.b + 10},${alpha2})`);
-        gradient.addColorStop(1, `rgba(${baseColor.r},${baseColor.g},${baseColor.b},${alpha1})`);
+        const gradient = ctx.createLinearGradient(0, 0, w, h);
+        gradient.addColorStop(0, `rgba(${layer.r},${layer.g},${layer.b},${alpha1})`);
+        gradient.addColorStop(0.5, `rgba(${layer.r + 15},${layer.g + 15},${layer.b + 15},${alpha2})`);
+        gradient.addColorStop(1, `rgba(${layer.r},${layer.g},${layer.b},${alpha1})`);
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
+        ctx.moveTo(0, yBase);
 
-        for (let x = 0; x <= canvas.width; x += 2) {
-          const y =
-            canvas.height / 2 +
-            Math.sin(x * waveFrequency + timeRef.current * waveSpeed + waveOffset) * waveAmplitude +
-            Math.cos(x * waveFrequency * 0.7 + timeRef.current * waveSpeed * 1.2) * (waveAmplitude * 0.5);
+        for (let x = 0; x <= w; x += 2) {
+          const a = x * layer.freq + t * layer.speed + layer.phase;
+          const wave =
+            Math.sin(a) * layer.amp +
+            Math.sin(a * 1.7 + t * 0.3) * (layer.amp * 0.35);
+          const y = yBase + wave;
           ctx.lineTo(x, y);
         }
 
-        ctx.lineTo(canvas.width, canvas.height);
-        ctx.lineTo(0, canvas.height);
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
         ctx.closePath();
         ctx.fill();
       }
@@ -84,7 +103,7 @@ export function InteractiveBackground({ theme }: { theme: Theme }) {
     };
   }, [theme]);
 
-  const bgColor = theme === "light" ? "#FFFFFF" : "#0F172A";
+  const bgColor = theme === "light" ? "#F5F5F5" : "#171717";
 
   if (Platform.OS !== "web") {
     return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />;

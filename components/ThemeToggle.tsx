@@ -8,9 +8,12 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
+  const isDark = theme === "dark";
   return (
     <Pressable
       onPress={onToggle}
+      accessibilityRole="button"
+      accessibilityLabel={isDark ? "Switch to light mode" : "Switch to dark mode"}
       style={({ pressed }) => [
         {
           position: "absolute",
@@ -21,7 +24,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
           borderRadius: 22,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: theme === "light" ? "#000000" : "#FFFFFF",
+          backgroundColor: isDark ? "#FFFFFF" : "#000000",
           zIndex: 1000,
           ...(Platform.OS === "web"
             ? ({
@@ -34,9 +37,9 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
       ]}
     >
       <Ionicons
-        name={theme === "light" ? "moon" : "sunny"}
+        name={isDark ? "sunny" : "moon"}
         size={22}
-        color={theme === "light" ? "#FFFFFF" : "#000000"}
+        color={isDark ? "#000000" : "#FFFFFF"}
       />
     </Pressable>
   );
