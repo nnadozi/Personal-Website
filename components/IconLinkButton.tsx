@@ -22,7 +22,13 @@ export function IconLinkButton({ icon, materialIcon, label, tooltip, href, theme
   const [isFocused, setIsFocused] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const showTooltip = icon === "document-text-outline" || icon === "send-outline" || materialIcon === "gmail";
+  const showTooltip =
+    icon === "document-text-outline" ||
+    icon === "document-text" ||
+    icon === "send-outline" ||
+    icon === "mail-outline" ||
+    icon === "mail" ||
+    materialIcon === "gmail";
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {

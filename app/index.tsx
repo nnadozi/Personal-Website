@@ -6,11 +6,25 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { PROFILE } from "../constants/profile";
 import { themeColors, type Theme } from "../constants/theme";
 import { useAnimations } from "../hooks/useAnimations";
+import { useTypewriter } from "../hooks/useTypewriter";
 import { styles } from "../styles";
 
 export default function Index() {
+  const typingSpeedMs = 30;
+  const nameStartDelayMs = 0;
+  const aboutStartDelayMs = nameStartDelayMs + PROFILE.fullName.length * typingSpeedMs + 320;
   const [theme, setTheme] = useState<Theme>("dark");
-  const { contentAnim, avatarAnimStyle, nameAnimStyle, aboutAnimStyle, buttonsAnimStyle } = useAnimations();
+  const { contentAnim, avatarAnimStyle, buttonsAnimStyle } = useAnimations();
+  // Type the name first, then start the bio after the name finishes.
+  const typedName = useTypewriter(PROFILE.fullName, {
+    speedMs: typingSpeedMs,
+    startDelayMs: nameStartDelayMs,
+  });
+  const typedAbout = useTypewriter(PROFILE.about, {
+    speedMs: typingSpeedMs,
+    startDelayMs: aboutStartDelayMs,
+    persistCursorAfterComplete: true,
+  });
   const colors = themeColors[theme];
 
   return (
@@ -28,11 +42,11 @@ export default function Index() {
           <Image source={PROFILE.avatar} style={[styles.avatar, { borderColor: colors.cardBorder }]} />
         </Animated.View>
 
-        <Animated.Text style={[styles.name, { color: colors.text }, nameAnimStyle]}>
-          {PROFILE.fullName}
+        <Animated.Text style={[styles.name, { color: colors.text }]}>
+          {typedName}
         </Animated.Text>
-        <Animated.Text style={[styles.about, { color: colors.text }, aboutAnimStyle]}>
-          {PROFILE.about}
+        <Animated.Text style={[styles.about, { color: colors.text }]}>
+          {typedAbout}
         </Animated.Text>
 
         <Animated.View style={[styles.linkRow, buttonsAnimStyle]}>
@@ -50,10 +64,9 @@ export default function Index() {
             href={PROFILE.links.linkedin}
             theme={theme}
           />
-          <IconLinkButton icon="document-text-outline" label="Open Resume" tooltip="Resume" href={PROFILE.links.cv} theme={theme} />
+          <IconLinkButton icon="document-text" label="Open Resume" tooltip="Resume" href={PROFILE.links.cv} theme={theme} />
           <IconLinkButton
-            icon="send-outline"
-            materialIcon="gmail"
+            icon="mail"
             label="Send Email"
             tooltip="Email"
             href={PROFILE.links.email}

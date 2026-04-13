@@ -1,4 +1,4 @@
-import { Platform, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   screen: {
@@ -31,8 +31,8 @@ export const styles = StyleSheet.create({
   },
   about: {
     marginTop: 10,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: "center",
     maxWidth: 460,
     opacity: 0.8,

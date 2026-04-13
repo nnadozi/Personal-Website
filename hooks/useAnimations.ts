@@ -4,8 +4,6 @@ import { Animated, Platform } from "react-native";
 export function useAnimations() {
   const entrance = useRef(new Animated.Value(0)).current;
   const avatarAnim = useRef(new Animated.Value(0)).current;
-  const nameAnim = useRef(new Animated.Value(0)).current;
-  const aboutAnim = useRef(new Animated.Value(0)).current;
   const buttonsAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -23,18 +21,6 @@ export function useAnimations() {
           useNativeDriver: Platform.OS !== "web",
         }),
       ]),
-      Animated.spring(nameAnim, {
-        toValue: 1,
-        tension: 40,
-        friction: 6,
-        useNativeDriver: Platform.OS !== "web",
-      }),
-      Animated.spring(aboutAnim, {
-        toValue: 1,
-        tension: 35,
-        friction: 7,
-        useNativeDriver: Platform.OS !== "web",
-      }),
       Animated.spring(buttonsAnim, {
         toValue: 1,
         tension: 30,
@@ -44,7 +30,7 @@ export function useAnimations() {
     ]);
 
     sequence.start();
-  }, [entrance, avatarAnim, nameAnim, aboutAnim, buttonsAnim]);
+  }, [entrance, avatarAnim, buttonsAnim]);
 
   const contentAnim = useMemo(
     () => ({
@@ -54,18 +40,6 @@ export function useAnimations() {
           translateY: entrance.interpolate({
             inputRange: [0, 1],
             outputRange: [40, 0],
-          }),
-        },
-        {
-          scale: entrance.interpolate({
-            inputRange: [0, 0.5, 1],
-            outputRange: [0.8, 1.05, 1],
-          }),
-        },
-        {
-          rotate: entrance.interpolate({
-            inputRange: [0, 1],
-            outputRange: ["-5deg", "0deg"],
           }),
         },
       ],
@@ -94,48 +68,6 @@ export function useAnimations() {
     [avatarAnim]
   );
 
-  const nameAnimStyle = useMemo(
-    () => ({
-      opacity: nameAnim,
-      transform: [
-        {
-          translateY: nameAnim.interpolate({
-            inputRange: [0, 0.6, 1],
-            outputRange: [30, -5, 0],
-          }),
-        },
-        {
-          scale: nameAnim.interpolate({
-            inputRange: [0, 0.5, 1],
-            outputRange: [0.5, 1.1, 1],
-          }),
-        },
-      ],
-    }),
-    [nameAnim]
-  );
-
-  const aboutAnimStyle = useMemo(
-    () => ({
-      opacity: aboutAnim,
-      transform: [
-        {
-          translateX: aboutAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-50, 0],
-          }),
-        },
-        {
-          scale: aboutAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0.9, 1],
-          }),
-        },
-      ],
-    }),
-    [aboutAnim]
-  );
-
   const buttonsAnimStyle = useMemo(
     () => ({
       opacity: buttonsAnim,
@@ -160,8 +92,6 @@ export function useAnimations() {
   return {
     contentAnim,
     avatarAnimStyle,
-    nameAnimStyle,
-    aboutAnimStyle,
     buttonsAnimStyle,
   };
 }

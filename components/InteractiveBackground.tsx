@@ -5,7 +5,6 @@ import type { Theme } from "../constants/theme";
 export function InteractiveBackground({ theme }: { theme: Theme }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const timeRef = useRef(0);
 
   useEffect(() => {
     if (Platform.OS !== "web") {
@@ -18,75 +17,125 @@ export function InteractiveBackground({ theme }: { theme: Theme }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    type Particle = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      alpha: number;
+    };
+
+    const initialTrailX = window.innerWidth / 2;
+    const initialTrailY = Math.max(80, window.innerHeight / 2 - 190);
+    const trailLength = 24;
+    const trail: Particle[] = Array.from({ length: trailLength }, () => ({
+      x: initialTrailX,
+      y: initialTrailY,
+      vx: 0,
+      vy: 0,
+      size: 0,
+      alpha: 0,
+    }));
+    const ambientCount = 70;
+    const ambient: Particle[] = [];
+
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      if (ambient.length === 0) {
+        for (let i = 0; i < ambientCount; i += 1) {
+          ambient.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.28,
+            vy: (Math.random() - 0.5) * 0.28,
+            size: 1.2 + Math.random() * 2.6,
+            alpha: 0.18 + Math.random() * 0.28,
+          });
+        }
+      }
     };
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
+
+    const pointer = { x: initialTrailX, y: initialTrailY };
+    let pointerHasMoved = false;
+    const handlePointerMove = (event: PointerEvent) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointerHasMoved = true;
+    };
+    window.addEventListener("pointermove", handlePointerMove);
+
+    let lastFrame = performance.now();
 
     const animate = () => {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
 
-      const t = (timeRef.current += 0.015);
+      const now = performance.now();
+      const dt = Math.min((now - lastFrame) / 16.67, 2);
+      lastFrame = now;
+
       const w = canvas.width;
       const h = canvas.height;
-      const cy = h / 2;
+      const t = now * 0.001;
+      const background = theme === "light" ? "#F5F5F5" : "#171717";
+      const ambientColor = theme === "light" ? "40,40,40" : "225,225,225";
+      const snakeColor = theme === "light" ? "20,20,20" : "235,235,235";
 
-      ctx.fillStyle = theme === "light" ? "#F5F5F5" : "#171717";
+      ctx.fillStyle = background;
       ctx.fillRect(0, 0, w, h);
 
-      // Organic but rhythmic: layered waves with soft harmonics and gentle drift
-      const layers =
-        theme === "light"
-          ? [
-              { r: 185, g: 185, b: 185, amp: 110, freq: 0.0028, speed: 0.48, phase: 0, yBias: -0.05 },
-              { r: 165, g: 165, b: 165, amp: 92, freq: 0.0034, speed: -0.38, phase: 1.4, yBias: 0.02 },
-              { r: 200, g: 200, b: 200, amp: 78, freq: 0.0024, speed: 0.42, phase: 2.7, yBias: -0.02 },
-              { r: 150, g: 150, b: 150, amp: 68, freq: 0.0038, speed: -0.44, phase: 4.1, yBias: 0.05 },
-              { r: 175, g: 175, b: 175, amp: 58, freq: 0.003, speed: 0.36, phase: 0.9, yBias: -0.01 },
-            ]
-          : [
-              { r: 85, g: 85, b: 85, amp: 110, freq: 0.0028, speed: 0.48, phase: 0, yBias: -0.05 },
-              { r: 100, g: 100, b: 100, amp: 92, freq: 0.0034, speed: -0.38, phase: 1.4, yBias: 0.02 },
-              { r: 75, g: 75, b: 75, amp: 78, freq: 0.0024, speed: 0.42, phase: 2.7, yBias: -0.02 },
-              { r: 95, g: 95, b: 95, amp: 68, freq: 0.0038, speed: -0.44, phase: 4.1, yBias: 0.05 },
-              { r: 82, g: 82, b: 82, amp: 58, freq: 0.003, speed: 0.36, phase: 0.9, yBias: -0.01 },
-            ];
+      // Keep subtle background particles alive to make the scene feel active.
+      for (let i = 0; i < ambient.length; i += 1) {
+        const dot = ambient[i];
+        dot.x += dot.vx * dt;
+        dot.y += dot.vy * dt;
+        if (dot.x < -6) dot.x = w + 6;
+        if (dot.x > w + 6) dot.x = -6;
+        if (dot.y < -6) dot.y = h + 6;
+        if (dot.y > h + 6) dot.y = -6;
 
-      const alpha1 = theme === "light" ? 0.16 : 0.2;
-      const alpha2 = theme === "light" ? 0.1 : 0.12;
-      const sharedDrift = Math.sin(t * 0.1) * 32;
-
-      for (let i = 0; i < layers.length; i++) {
-        const layer = layers[i];
-        const layerDrift = Math.sin(t * 0.16 + i * 0.6) * 18;
-        const yBase = cy + layer.yBias * h * 0.14 + sharedDrift + layerDrift;
-
-        const gradient = ctx.createLinearGradient(0, 0, w, h);
-        gradient.addColorStop(0, `rgba(${layer.r},${layer.g},${layer.b},${alpha1})`);
-        gradient.addColorStop(0.5, `rgba(${layer.r + 15},${layer.g + 15},${layer.b + 15},${alpha2})`);
-        gradient.addColorStop(1, `rgba(${layer.r},${layer.g},${layer.b},${alpha1})`);
-
-        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.moveTo(0, yBase);
+        ctx.fillStyle = `rgba(${ambientColor},${dot.alpha})`;
+        ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-        for (let x = 0; x <= w; x += 2) {
-          const a = x * layer.freq + t * layer.speed + layer.phase;
-          const wave =
-            Math.sin(a) * layer.amp +
-            Math.sin(a * 1.7 + t * 0.3) * (layer.amp * 0.35);
-          const y = yBase + wave;
-          ctx.lineTo(x, y);
-        }
+      // The "snake" head eases toward the pointer while the tail follows.
+      const head = trail[0];
+      const idleX = initialTrailX + Math.sin(t * 0.8) * w * 0.04;
+      const idleY = initialTrailY + Math.cos(t * 1.05) * h * 0.03;
+      const targetX = pointerHasMoved ? pointer.x : idleX;
+      const targetY = pointerHasMoved ? pointer.y : idleY;
 
-        ctx.lineTo(w, h);
-        ctx.lineTo(0, h);
-        ctx.closePath();
+      head.vx += (targetX - head.x) * 0.04 * dt;
+      head.vy += (targetY - head.y) * 0.04 * dt;
+      head.vx *= 0.84;
+      head.vy *= 0.84;
+      head.x += head.vx * dt;
+      head.y += head.vy * dt;
+
+      for (let i = 1; i < trail.length; i += 1) {
+        const prev = trail[i - 1];
+        const segment = trail[i];
+        segment.x += (prev.x - segment.x) * (0.22 - i * 0.004) * dt;
+        segment.y += (prev.y - segment.y) * (0.22 - i * 0.004) * dt;
+      }
+
+      for (let i = trail.length - 1; i >= 0; i -= 1) {
+        const segment = trail[i];
+        const ratio = 1 - i / trail.length;
+        const size = 1 + ratio * 6;
+        const alpha = 0.03 + ratio * 0.28;
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${snakeColor},${alpha})`;
+        ctx.arc(segment.x, segment.y, size, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -97,6 +146,7 @@ export function InteractiveBackground({ theme }: { theme: Theme }) {
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("pointermove", handlePointerMove);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
